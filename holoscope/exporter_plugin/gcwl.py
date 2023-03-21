@@ -218,11 +218,10 @@ class Exporter(object):
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
-                        if event.actual_start_time:
+                        if not event.actual_start_time:
                             line_first_line = "【通知】配信が開始されました\n"
                             line_message_text = line_first_line + LINE_MESSAGE_TEMPLATE
                             self.linebot.broadcast(TextSendMessage(text=line_message_text))
-                            continue
                         log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
                         continue
                 elif live_event.scheduled_start_time.to(TZ) != event.start_dateTime:
@@ -249,12 +248,11 @@ class Exporter(object):
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
-                        if event.actual_end_time:
+                        if not event.actual_end_time:
                             line_first_line = "【通知】配信が終了しました\n"
                             line_message_text = line_first_line + LINE_MESSAGE_TEMPLATE
                             self.linebot.broadcast(TextSendMessage(text=line_message_text))
                             log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
-                        continue
                 log.info(f'[{live_event.id}]: {live_event.title} is already scheduled.')
                 continue
             else:
