@@ -253,6 +253,7 @@ class Exporter(object):
                             line_message_text = line_first_line + LINE_MESSAGE_TEMPLATE
                             self.linebot.broadcast(TextSendMessage(text=line_message_text))
                             log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
+                            continue
                 log.info(f'[{live_event.id}]: {live_event.title} is already scheduled.')
                 continue
             else:
