@@ -214,7 +214,7 @@ class Exporter(object):
                     log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
                     continue
                 if live_event.actual_start_time:
-                    if live_event.actual_start_time.to('Asia/Tokyo') != event.start_dateTime:
+                    if live_event.actual_start_time.to(TZ) != event.start_dateTime:
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
@@ -225,7 +225,7 @@ class Exporter(object):
                             continue
                         log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
                         continue
-                elif live_event.scheduled_start_time.to('Asia/Tokyo') != event.start_dateTime:
+                elif live_event.scheduled_start_time.to(TZ) != event.start_dateTime:
                     line_first_line = "【通知】時刻が変更されました\n"
                     self._update_event(event.id, live_event)
                     log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
@@ -237,15 +237,15 @@ class Exporter(object):
                     self.linebot.broadcast(TextSendMessage(text=line_message_text))
                     log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
                     continue
-                elif live_event.scheduled_start_time.to('Asia/Tokyo') > arrow.utcnow().to('Asia/Tokyo'):
-                    if (live_event.scheduled_start_time.to('Asia/Tokyo') - arrow.utcnow().to('Asia/Tokyo'))\
+                elif live_event.scheduled_start_time.to(TZ) > arrow.utcnow().to(TZ):
+                    if (live_event.scheduled_start_time.to(TZ) - arrow.utcnow().to(TZ))\
                             .seconds <= 900:
                         line_first_line = "【通知】配信がもうすぐ開始します！\n"
                         line_message_text = line_first_line + LINE_MESSAGE_TEMPLATE
                         self.linebot.broadcast(TextSendMessage(text=line_message_text))
                         log.info(f'[{live_event.id}]: Push message to channel {line_message_text}')
                 if live_event.actual_end_time:
-                    if live_event.actual_end_time.to('Asia/Tokyo') != event.end_dateTime:
+                    if live_event.actual_end_time.to(TZ) != event.end_dateTime:
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
