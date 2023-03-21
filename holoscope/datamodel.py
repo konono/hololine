@@ -73,9 +73,19 @@ class GCalEvent():
         return self._data['summary']
 
     @property
-    def start_time(self) -> str:
-        start_time = self._data['start']['dateTime']
-        return arrow.get(start_time)
+    def start_dateTime(self) -> str:
+        start_dateTime = self._data['start']['dateTime']
+        return arrow.get(start_dateTime)
+
+    @property
+    def actual_start_time(self) -> str:
+        actual_start_time = self._data['extendedProperties']['private']['actual_start_time']
+        return arrow.get(actual_start_time)
+
+    @property
+    def actual_end_time(self) -> str:
+        actual_end_time = self._data['extendedProperties']['private']['actual_end_time']
+        return arrow.get(actual_end_time)
 
     @property
     def scheduled_start_time(self) -> str:
@@ -83,9 +93,9 @@ class GCalEvent():
         return arrow.get(scheduled_start_time)
 
     @property
-    def end_time(self) -> str:
-        end_time = self._data['end']['dateTime']
-        return arrow.get(end_time)
+    def end_dateTime(self) -> str:
+        end_dateTime = self._data['end']['dateTime']
+        return arrow.get(end_dateTime)
 
     @property
     def link(self) -> str:
@@ -118,6 +128,12 @@ class GCalEvent():
     @property
     def collaborate(self) -> str:
         return self._data['extendedProperties']['private']['collaborate']
+
+    def __repr__(self):
+        return self.id
+
+    def __str__(self):
+        return self.id
 
 
 @dataclass
@@ -156,9 +172,11 @@ class YoutubeConfiguration:
     api_key: str
     channel_ids: Optional[List[str]] = None
 
+
 @dataclass
 class LineConfiguration:
     line_channel_access_token: str
+
 
 @dataclass
 class Configuration:
