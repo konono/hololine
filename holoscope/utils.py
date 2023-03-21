@@ -14,7 +14,13 @@ class YoutubeUtils():
         video_ids = [item['id']['videoId'] for item in response.get('items', [])]
         return video_ids
 
-    def get_live_event(self, video_ids: list) -> list:
+    def get_live_event(self, video_id: list) -> list:
+        part = 'snippet,liveStreamingDetails'
+        video_response = self.youtube.videos().list(id=video_id,
+                                                    part=part).execute()
+        return video_response.get('items')[0]
+
+    def get_live_events(self, video_ids: list) -> list:
         part = 'snippet,liveStreamingDetails'
         video_response = self.youtube.videos().list(id=','.join(video_ids),
                                                     part=part).execute()
