@@ -5,7 +5,7 @@ provider "aws" {
 
 # Variables
 variable "system_name" {
-  default = "terraform-lambda-okayu"
+  default = "terraform-lambda-me"
 }
 
 # Archive
@@ -28,7 +28,7 @@ resource "aws_lambda_layer_version" "lambda_layer" {
 }
 
 # Function
-resource "aws_lambda_function" "hololine_okayu" {
+resource "aws_lambda_function" "hololine_me" {
   function_name    = "${var.system_name}"
   handler          = "run.lambda_handler"
   filename         = data.archive_file.function_zip.output_path
@@ -40,26 +40,26 @@ resource "aws_lambda_function" "hololine_okayu" {
 }
 
 # cloudwatch event rule
-resource "aws_cloudwatch_event_rule" "hololine_okayu_event_rule" {
+resource "aws_cloudwatch_event_rule" "hololine_me_event_rule" {
     name                = "${var.system_name}_holoscope_scheduler"
     description         = "Run holoscope every 15 minutes"
     schedule_expression = "cron(4/15 0-2,6-23 * * ? *)"
 }
 
 # cloudwatch event target
-resource "aws_cloudwatch_event_target" "hololine_okayu_event_target" {
-    rule      = aws_cloudwatch_event_rule.hololine_okayu_event_rule.name
-    target_id = "hololine_okayu"
-    arn       = aws_lambda_function.hololine_okayu.arn
+resource "aws_cloudwatch_event_target" "hololine_me_event_target" {
+    rule      = aws_cloudwatch_event_rule.hololine_me_event_rule.name
+    target_id = "hololine_me"
+    arn       = aws_lambda_function.hololine_me.arn
 }
 
 # Permission
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_holoscope" {
     statement_id  = "AllowExecutionFromCloudWatch"
     action        = "lambda:InvokeFunction"
-    function_name = aws_lambda_function.hololine_okayu.function_name
+    function_name = aws_lambda_function.hololine_me.function_name
     principal     = "events.amazonaws.com"
-    source_arn    = aws_cloudwatch_event_rule.hololine_okayu_event_rule.arn
+    source_arn    = aws_cloudwatch_event_rule.hololine_me_event_rule.arn
 }
 
 # Role

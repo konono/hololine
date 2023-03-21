@@ -28,8 +28,8 @@ resource "aws_lambda_layer_version" "lambda_layer" {
 }
 
 # Function
-resource "aws_lambda_function" "holoscope_mikochi" {
-  function_name    = "${var.system_name}_holoscope"
+resource "aws_lambda_function" "hololine_mikochi" {
+  function_name    = "${var.system_name}"
   handler          = "run.lambda_handler"
   filename         = data.archive_file.function_zip.output_path
   runtime          = "python3.9"
@@ -40,26 +40,26 @@ resource "aws_lambda_function" "holoscope_mikochi" {
 }
 
 # cloudwatch event rule
-resource "aws_cloudwatch_event_rule" "holoscope_mikochi_event_rule" {
+resource "aws_cloudwatch_event_rule" "hololine_mikochi_event_rule" {
     name                = "${var.system_name}_holoscope_scheduler"
     description         = "Run holoscope every 15 minutes"
     schedule_expression = "cron(4/15 0-2,6-23 * * ? *)"
 }
 
 # cloudwatch event target
-resource "aws_cloudwatch_event_target" "holoscope_mikochi_event_target" {
-    rule      = aws_cloudwatch_event_rule.holoscope_mikochi_event_rule.name
-    target_id = "holoscope_mikochi"
-    arn       = aws_lambda_function.holoscope_mikochi.arn
+resource "aws_cloudwatch_event_target" "hololine_mikochi_event_target" {
+    rule      = aws_cloudwatch_event_rule.hololine_mikochi_event_rule.name
+    target_id = "hololine_mikochi"
+    arn       = aws_lambda_function.hololine_mikochi.arn
 }
 
 # Permission
 resource "aws_lambda_permission" "allow_cloudwatch_to_call_holoscope" {
     statement_id  = "AllowExecutionFromCloudWatch"
     action        = "lambda:InvokeFunction"
-    function_name = aws_lambda_function.holoscope_mikochi.function_name
+    function_name = aws_lambda_function.hololine_mikochi.function_name
     principal     = "events.amazonaws.com"
-    source_arn    = aws_cloudwatch_event_rule.holoscope_mikochi_event_rule.arn
+    source_arn    = aws_cloudwatch_event_rule.hololine_mikochi_event_rule.arn
 }
 
 # Role

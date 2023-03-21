@@ -11,7 +11,7 @@ mkdir -p build/function/ build/layer/
 
 # Copy source files
 echo "Copy source files"
-cp -p ../../../config_okayu.toml build/function/config.toml
+cp -p ../../../config.toml build/function/config.toml
 cp -p ../../../run.py build/function/
 
 

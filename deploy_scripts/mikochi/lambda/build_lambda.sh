@@ -11,7 +11,7 @@ mkdir -p build/function/ build/layer/
 
 # Copy source files
 echo "Copy source files"
-cp -p ../../../mikochi_config.toml build/function/config.toml
+cp -p ../../../config_mikochi.toml build/function/config.toml
 cp -p ../../../run.py build/function/
 
 
