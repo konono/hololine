@@ -64,6 +64,12 @@ class GCalEvent():
     def __init__(self, data) -> None:
         self._data = data
 
+    def __repr__(self):
+        return self.id
+
+    def __str__(self):
+        return self.id
+
     @property
     def id(self) -> str:
         return self._data['id']
@@ -79,11 +85,20 @@ class GCalEvent():
 
     @property
     def actual_start_time(self) -> str:
-        actual_start_time = self._data['extendedProperties']['private']['actual_start_time']
+        try:
+            actual_start_time = self._data['extendedProperties']['private']['actual_start_time']
+        except KeyError:
+            actual_start_time = None
         return arrow.get(actual_start_time)
 
     @property
     def actual_end_time(self) -> str:
+        try:
+            actual_end_time = self._data['extendedProperties']['private']['actual_end_time']
+        except KeyError:
+            actual_end_time = None
+        return actual_end_time
+
         actual_end_time = self._data['extendedProperties']['private']['actual_end_time']
         return arrow.get(actual_end_time)
 
@@ -127,13 +142,15 @@ class GCalEvent():
 
     @property
     def collaborate(self) -> str:
-        return self._data['extendedProperties']['private']['collaborate']
+        try:
+            collaborate = self._data['extendedProperties']['private']['collaborate']
+        except KeyError:
+            collaborate = None
+        return collaborate
 
-    def __repr__(self):
-        return self.id
-
-    def __str__(self):
-        return self.id
+    @property
+    def extendedProperties(self) -> dict:
+        return self._data["extendedProperties"]["private"]
 
 
 @dataclass
