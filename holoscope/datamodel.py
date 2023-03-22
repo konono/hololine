@@ -86,15 +86,15 @@ class GCalEvent():
     @property
     def actual_start_time(self) -> str:
         try:
-            actual_start_time = self._data['extendedProperties']['private']['actual_start_time']
+            actual_start_time = arrow.get(self._data['extendedProperties']['private']['actual_start_time'])
         except KeyError:
             actual_start_time = None
-        return arrow.get(actual_start_time)
+        return actual_start_time
 
     @property
     def actual_end_time(self) -> str:
         try:
-            actual_end_time = self._data['extendedProperties']['private']['actual_end_time']
+            actual_end_time = arrow.get(self._data['extendedProperties']['private']['actual_end_time'])
         except KeyError:
             actual_end_time = None
         return actual_end_time
