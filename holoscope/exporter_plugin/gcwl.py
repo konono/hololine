@@ -264,7 +264,7 @@ class Exporter(object):
                 event = event[0]
                 if title != event.title:
                     self.google_calendar.update_event(event.id, live_event)
-                    log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
+                    log.info(f'[{live_event.id}] [UPDATE]: Update the scheduled {live_event.title}.')
                     presigned_url = self.s3operator.create_presigned_url(live_event)
                     log.info(f'[{live_event.id}]: Create presigned_url: {presigned_url}.')
                     first_line = "【通知】タイトルが変更になりました\n"
@@ -276,7 +276,7 @@ class Exporter(object):
                 if live_event.actual_start_time:
                     if live_event.actual_start_time.to(TZ) != event.start_dateTime:
                         self.google_calendar.update_event(event.id, live_event)
-                        log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
+                        log.info(f'[{live_event.id}] [UPDATE]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
                         if not event.actual_start_time:
                             first_line = "【通知】配信が開始されました\n"
@@ -286,7 +286,7 @@ class Exporter(object):
                         continue
                 elif live_event.scheduled_start_time.to(TZ) != event.start_dateTime:
                     self.google_calendar.update_event(event.id, live_event)
-                    log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
+                    log.info(f'[{live_event.id}] [UPDATE]: Update the scheduled {live_event.title}.')
                     presigned_url = self.s3operator.create_presigned_url(live_event)
                     log.info(f'[{live_event.id}]: Create presigned_url: {presigned_url}.')
                     first_line = "【通知】時刻が変更されました\n"
@@ -305,7 +305,7 @@ class Exporter(object):
                 if live_event.actual_end_time:
                     if live_event.actual_end_time.to(TZ) != event.end_dateTime:
                         self.google_calendar.update_event(event.id, live_event)
-                        log.info(f'[{live_event.id}]: Update the scheduled {live_event.title}.')
+                        log.info(f'[{live_event.id}] [UPDATE]: Update the scheduled {live_event.title}.')
                         # すでにactual_end_timeがgoogle calendarの中にあった場合はLineで通知しない
                         if not event.actual_end_time:
                             first_line = "【通知】配信が終了しました\n"
@@ -313,7 +313,7 @@ class Exporter(object):
                             self.line_message_sender.broadcast_message(nortification_message)
                             log.info(f'[{live_event.id}]: Push message to channel.')
                             continue
-                log.info(f'[{live_event.id}]: {live_event.title} is already scheduled.')
+                log.info(f'[{live_event.id}] [ALREADY_EXIST]: {live_event.title} is already scheduled.')
                 continue
             else:
                 message_template = self.line_message_sender.create_message_data(event, live_event)
@@ -322,7 +322,7 @@ class Exporter(object):
                              f'because it is {FUTURE} days away.')
                     continue
                 event = self.google_calendar.create_event(live_event)
-                log.info(f'[{live_event.id}]: Create {title} has been scheduled.')
+                log.info(f'[{live_event.id}] [CREATE]: Create {title} has been scheduled.')
                 presigned_url = self.s3operator.create_presigned_url(live_event)
                 log.info(f'[{live_event.id}]: Create presigned_url: {presigned_url}.')
                 first_line = "【通知】新しい予定が追加されました\n"
