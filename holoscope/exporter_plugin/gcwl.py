@@ -78,11 +78,12 @@ class GoogleCalendar:
         start_dateTime, end_dateTime = create_event_dateTime(live_event, ISO861FORMAT)
         # 予定のタイトル
         summary = f'{title}'
-        description = textwrap.dedent(f'''チャンネル: {live_event.channel_title}
-             タイトル: {live_event.title}
+        description = textwrap.dedent(f'''
+        チャンネル: {live_event.channel_title}
+        タイトル: {live_event.title}
 
-             配信URL: https://www.youtube.com/watch?v={live_event.id}
-            ''')
+        配信URL: https://www.youtube.com/watch?v={live_event.id}
+        '''[1:-1])
         # 予定の開始時刻
         start_time = {
             'dateTime': start_dateTime,
@@ -212,10 +213,11 @@ class S3Operator:
         event.add('summary', f'{title}')
         event.add('dtstart', datetime.strptime(start_dateTime, '%Y/%m/%d %H:%M:%S'))
         event.add('dtend', datetime.strptime(end_dateTime, '%Y/%m/%d %H:%M:%S'))
-        event.add('description', textwrap.dedent(f'''タイトル: {title}
+        event.add('description', textwrap.dedent(f'''
+        タイトル: {title}
         チャンネル: {live_event.channel_title}
         配信URL: https://www.youtube.com/watch?v={live_event.id}
-        '''))
+        '''[1:-1]))
         cal.add_component(event)
 
         # icsファイル作成
