@@ -43,7 +43,7 @@ resource "aws_lambda_function" "hololine_me" {
 resource "aws_cloudwatch_event_rule" "hololine_me_event_rule" {
     name                = "${var.system_name}_holoscope_scheduler"
     description         = "Run holoscope every 15 minutes"
-    schedule_expression = "cron(4/15 0-2,6-23 * * ? *)"
+    schedule_expression = "cron(4/15 0-17,21-23 * * ? *)"
 }
 
 # cloudwatch event target
