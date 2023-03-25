@@ -9,7 +9,6 @@ import socket
 from .. import utils
 from ..utils import GoogleCalendarUtils
 from ..utils import LineMessageSender
-from ..utils import S3Utils
 
 log = logging.getLogger(__name__)
 timeout_in_sec = 5
@@ -31,7 +30,6 @@ class Exporter(object):
         self.google_calendar = GoogleCalendarUtils(config)
         self.events = self.google_calendar.get_events()
         self.line_message_sender = LineMessageSender(config)
-        self.s3operator = S3Utils(config)
 
     def create_event(self, live_events: list) -> None:
         for live_event in live_events:
@@ -99,7 +97,6 @@ class Exporter(object):
         self.google_calendar.create_event(live_event)
         log.info(f'[{live_event.id}] [CREATE]: Create {title} has been scheduled.')
         self.notify_event_creation(live_event, self.line_message_sender.create_message_data(live_event))
-        self.s3operator.create_presigned_url(live_event)
 
     def notify_event_creation(self, live_event, message_template):
         self.line_message_sender.broadcast_message("【通知】新しい配信が追加されました\n" + message_template)
