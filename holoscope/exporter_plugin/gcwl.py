@@ -20,7 +20,7 @@ SCOPES = ['https://www.googleapis.com/auth/calendar']
 TZ = "Asia/Tokyo"
 ISO861FORMAT = 'YYYY-MM-DDTHH:mm:ss.SSSSSS'
 LINEFORMAT = 'YYYY/MM/DD HH:mm:ss'
-COLLAB_PATTERN = re.compile(r'\[(.*?)\]')
+COLLAB_PATTERN = re.compile(r'^\[(.*?)\]')
 FUTURE = 120
 
 
@@ -122,8 +122,8 @@ class Exporter(object):
                 if live_event.collaborate or live_event.actor != member:
                     continue
                 for event in self.events:
-                    collabo_title = self._get_collabo_title(event.title)
-                    if not collabo_title or member not in collabo_title:
+                    collaborater = self._get_collabo_title(event.title)
+                    if not collaborater or member not in collaborater:
                         continue
                     if event.scheduled_start_time == live_event.scheduled_start_time:
                         self.google_calendar.delete_event(event.id, live_event)
@@ -131,7 +131,10 @@ class Exporter(object):
                                  f'was deleted because of duplicate {event.title}.')
 
     def _get_collabo_title(self, title: str) -> str:
-        result = COLLAB_PATTERN.search(title)
-        if result:
-            return result[0]
+        match = COLLAB_PATTERN.search(title)
+        if match:
+            collabo_title = match.group(1)
+            collaborater = collabo_title.split()
+            collaborater.remove('コラボ')
+            return collaborater
         return ''
