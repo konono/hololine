@@ -40,6 +40,7 @@ class Exporter(object):
         title = utils.create_title(live_event)
 
         if event:
+            log.info(f'[{live_event.id}] ### Processing {live_event.title}.')
             self.update_event_if_needed(event, live_event, title)
         else:
             self.create_event_if_possible(live_event, title)
