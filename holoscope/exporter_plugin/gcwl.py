@@ -39,8 +39,8 @@ class Exporter(object):
         event = self.find_event(live_event)
         title = utils.create_title(live_event)
 
+        log.info(f'[{live_event.id}] ### Processing {live_event.title}.')
         if event:
-            log.info(f'[{live_event.id}] ### Processing {live_event.title}.')
             self.update_event_if_needed(event, live_event, title)
         else:
             self.create_event_if_possible(live_event, title)
@@ -54,14 +54,16 @@ class Exporter(object):
 
         if title != event.title:
             self.google_calendar.update_event(event.id, live_event)
-            log.info(f'[{live_event.id}] [UPDATE]: Update the scheduled {live_event.title}.')
+            log.info(f'[{live_event.id}] [UPDATE]: [{event.id}] ' +
+                     f'Update title {live_event.title}.')
             # self.notify_event_update_title(live_event, message_template)
             should_notify = True
 
         if (live_event.actual_start_time and
                 live_event.actual_start_time.to(TZ) != event.start_dateTime):
             self.google_calendar.update_event(event.id, live_event)
-            log.info(f'[{live_event.id}] [UPDATE]: Update to actual start_dateTime {live_event.title}.')
+            log.info(f'[{live_event.id}] [UPDATE]: [{event.id}] ' +
+                     f'Update to actual start_dateTime {live_event.title}.')
             if not event.actual_start_time:
                 self.notify_event_start(live_event, message_template)
                 should_notify = True
@@ -69,7 +71,8 @@ class Exporter(object):
         if (not live_event.actual_start_time and
                 live_event.scheduled_start_time.to(TZ) != event.start_dateTime):
             self.google_calendar.update_event(event.id, live_event)
-            log.info(f'[{live_event.id}] [UPDATE]: Update to scheduled start_dateTime {live_event.title}.')
+            log.info(f'[{live_event.id}] [UPDATE]: [{event.id}] ' +
+                     f'Update to scheduled start_dateTime {live_event.title}.')
             self.notify_event_update_start_time(live_event, message_template)
             should_notify = True
 
@@ -81,13 +84,15 @@ class Exporter(object):
         if (live_event.actual_end_time and
                 live_event.actual_end_time.to(TZ) != event.end_dateTime):
             self.google_calendar.update_event(event.id, live_event)
-            log.info(f'[{live_event.id}] [UPDATE]: Update to actual end_dateTime {live_event.title}.')
+            log.info(f'[{live_event.id}] [UPDATE]: [{event.id}] ' +
+                     f'Update to actual end_dateTime {live_event.title}.')
             if not event.actual_end_time:
                 # self.notify_event_end(live_event, message_template)
                 should_notify = True
 
         if not should_notify:
-            log.info(f'[{live_event.id}] [ALREADY_EXIST]: {live_event.title} is already scheduled.')
+            log.info(f'[{live_event.id}] [ALREADY_EXIST]: [{event.id}] ' +
+                     f'{live_event.title} is already scheduled.')
 
     def create_event_if_possible(self, live_event, title):
         if live_event.scheduled_start_time > arrow.utcnow().shift(days=FUTURE):
@@ -95,8 +100,9 @@ class Exporter(object):
                      f'because it is {FUTURE} days away.')
             return
 
-        self.google_calendar.create_event(live_event)
-        log.info(f'[{live_event.id}] [CREATE]: Create {title} has been scheduled.')
+        created_event = self.google_calendar.create_event(live_event)
+        log.info(f'[{live_event.id}] [CREATE]: [{created_event.get("id")}] ' +
+                 f'Create {title} has been scheduled.')
         self.notify_event_creation(live_event, self.line_message_sender.create_message_data(live_event))
 
     def notify_event_creation(self, live_event, message_template):
