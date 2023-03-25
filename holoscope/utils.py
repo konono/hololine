@@ -42,7 +42,7 @@ FUTURE = 120
 
 def create_title(live_event):
     if live_event.collaborate:
-        title = (f'[{", ".join(live_event.collaborate)} コラボ] ' +
+        title = (f'[{" ".join(live_event.collaborate)} コラボ] ' +
                  f'{live_event.channel_title}: {live_event.title}')
     else:
         title = f'{live_event.channel_title}: {live_event.title}'
@@ -137,7 +137,7 @@ class GoogleCalendarUtils:
             }
         }
         if live_event.collaborate:
-            extended_property["private"]["collaborate"] = ",".join(live_event.collaborate)
+            extended_property["private"]["collaborate"] = " ".join(live_event.collaborate)
         if live_event.actual_start_time:
             extended_property["private"]["actual_start_time"] = live_event.actual_start_time.\
                     format(ISO861FORMAT)

@@ -66,15 +66,18 @@ class Importer(object):
         thumbnail_cache = thumbnail_cache_manager.get_thumbnail_cache()
         # 配信予定でループして、actorが一致したらbreak、コラボ予定であればcollaboratorsを追加
         for program in all_programs:
-            for i in self.cnf.holodule.holomenbers:
-                if i == program.get('actor'):
+            # for i in self.cnf.holodule.holomenbers:
+            for holomen in thumbnail_cache:
+                if program.get('actor') in self.cnf.holodule.holomenbers:
                     program['collaborate'] = []
                     programs.append(program)
                     break
                 # キャッシュに入ってる推しのサムネイルのURLとコラボレーターの中に入っていたサムネイルのURLが一致したらコラボ配信と判定
-                if thumbnail_cache[i].get('holodule_url') in program['collaborators']:
-                    program['collaborate'].append(i)
-                    programs.append(program)
+                if thumbnail_cache[holomen].get('holodule_url') in program['collaborators']:
+                    program['collaborate'].append(holomen)
+                if holomen in self.cnf.holodule.holomenbers:
+                    if holomen in program['collaborate']:
+                        programs.append(program)
         # 同一のprogramがlist内にあった場合削除
         programs = list(map(json.loads, set(map(json.dumps, programs))))
         log.debug(f'Contents filtered by favorite: {programs}')
