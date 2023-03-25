@@ -225,7 +225,6 @@ class LineMessageSender:
         line_message = f'タイトル: {title}\n'\
                        f'チャンネル: {live_event.channel_title}\n'\
                        f'開始時刻: {start_dateTime}\n'\
-                       f'終了時刻: {end_dateTime}\n'\
                        f'配信URL: https://www.youtube.com/watch?v={live_event.id}'
         return line_message
 
