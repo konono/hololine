@@ -1,26 +1,23 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# import imagehash
-# import io
-import itertools
 import json
 import logging
 import requests
-import socket
-# import urllib.request
 
 from bs4 import BeautifulSoup
-# from PIL import Image
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from ..datamodel import LiveEvent
 from ..thumbnail_cache_manager import ThumbnailCacheManager
 from ..utils import YoutubeUtils
 
 log = logging.getLogger(__name__)
-timeout_in_sec = 5
-socket.setdefaulttimeout(timeout_in_sec)
+
+ACTOR_NAME_ALIASES = {
+    'ラプラス': 'ラプラス・ダークネス',
+    'アキロゼ': 'アキ・ローゼンタール',
+}
 
 
 class Importer(object):
@@ -30,89 +27,110 @@ class Importer(object):
         self.live_events = self._get_live_events()
 
     def _deduplicate_live_events(self, events) -> list:
-        primary_events = [{e.actor: e} for e in events if not e.collaborate]
-        collaborate_events = [{collabo: e} for e in events if e.collaborate for collabo in e.collaborate]
-        delete_items = []
-        ''' ホロメンのリストと、コラボ予定のeventsでループを回し、
-            推しの配信予定とコラボ予定の時間が重複していた場合はdelete_itemsに追加
-        '''
-        for i in self.cnf.holodule.holomenbers:
-            for y, ce in enumerate(collaborate_events):
-                if ce.get(i):
-                    for pe in [x[i] for x in primary_events if x.get(i)]:
-                        if ce[i].scheduled_start_time == pe.scheduled_start_time:
-                            delete_items.append(ce.get(i))
-                            log.info(f'{ce[i].title} was deleted because duplicate event.')
-                            break
-        # primary_eventsとcollaborate_eventsを二次元配列にした後、flattenする
-        events = list(itertools.chain.from_iterable(([list(i.values()) for i in primary_events]
-                                                    + [list(j.values()) for j in collaborate_events])))
-        # delete_itemsにあるオブジェクトがeventsの中にあれば削除する
-        for d in delete_items:
-            events = [event for event in events if event != d]
+        """推しの主配信とコラボ配信の時間が重複している場合、コラボ側を除外する"""
+        favorites = set(self.cnf.holodule.holomenbers)
 
-        # コラボレーターが複数人いる場合にeventが重複するので、重複しているイベントがあれば削除
-        return list(set(events))
+        # 主配信（コラボなし）を (actor, scheduled_start_time) でインデックス化
+        primary_keys = set()
+        for e in events:
+            if not e.collaborate:
+                primary_keys.add((e.actor, e.scheduled_start_time))
 
-    def _get_live_events(self) -> list:
+        seen_ids = set()
+        result = []
+        for e in events:
+            # コラボイベントが主配信と重複する場合は除外
+            if e.collaborate:
+                is_duplicate = any(
+                    (member, e.scheduled_start_time) in primary_keys
+                    for member in e.collaborate if member in favorites
+                )
+                if is_duplicate:
+                    log.info(f'{e.title} was deleted because duplicate event.')
+                    continue
+
+            # 同一video IDの重複を排除
+            if e.id in seen_ids:
+                continue
+            seen_ids.add(e.id)
+            result.append(e)
+
+        return result
+
+    def _filter_and_annotate_programs(self, all_programs, thumbnail_cache) -> list:
+        """推しメンバーに関連するprogramのみをフィルタし、コラボ情報を付与する"""
+        favorites = set(self.cnf.holodule.holomenbers)
+
+        # サムネイルURL → メンバー名の逆引き辞書
+        thumb_to_member = {}
+        for member_name, cache_entry in thumbnail_cache.items():
+            url = cache_entry.get('holodule_url')
+            if url:
+                thumb_to_member[url] = member_name
+
+        results = {}  # video_id をキーにして自動重複排除
+        for program in all_programs:
+            actor = program['actor']
+            video_id = program['video_id']
+
+            # コラボレーターのサムネイルから推しメンバーを検出
+            collabs = [
+                thumb_to_member[url]
+                for url in program.get('collaborators', [])
+                if url in thumb_to_member and thumb_to_member[url] in favorites
+            ]
+
+            is_favorite_stream = actor in favorites
+            has_favorite_collab = len(collabs) > 0
+
+            if is_favorite_stream or has_favorite_collab:
+                program_copy = dict(program)
+                # 推しの主配信ではcollaborateを空に、コラボ配信では推しメンバー名を格納
+                program_copy['collaborate'] = [] if is_favorite_stream else collabs
+                results[video_id] = program_copy
+
+        return list(results.values())
+
+    def _build_events_from_responses(self, programs, youtube_utils) -> list:
+        """programリストからYouTube APIを呼び出し、LiveEventオブジェクトを生成する"""
+        program_by_video_id = {p['video_id']: p for p in programs}
+        video_ids = list(program_by_video_id.keys())
+
         events = []
-        programs = []
-        thumbnail_hash = {}
-        youtube_utils = YoutubeUtils(self.youtube)
-        all_programs = self._get_programs()
-        for program in all_programs:
-            thumbnail_hash[program.get('actor')] = {'holodule_url': program.get('img')}
-        thumbnail_cache_manager = ThumbnailCacheManager(self.cnf, self.youtube, thumbnail_hash)
-        thumbnail_cache = thumbnail_cache_manager.get_thumbnail_cache()
-        # 配信予定でループして、actorが一致したらbreak、コラボ予定であればcollaboratorsを追加
-        for program in all_programs:
-            # for i in self.cnf.holodule.holomenbers:
-            for holomen in thumbnail_cache:
-                if program.get('actor') in self.cnf.holodule.holomenbers:
-                    program['collaborate'] = []
-                    programs.append(program)
-                    break
-                # キャッシュに入ってる推しのサムネイルのURLとコラボレーターの中に入っていたサムネイルのURLが一致したらコラボ配信と判定
-                if thumbnail_cache[holomen].get('holodule_url') in program['collaborators']:
-                    program['collaborate'].append(holomen)
-                if holomen in self.cnf.holodule.holomenbers:
-                    if holomen in program['collaborate']:
-                        programs.append(program)
-        # 同一のprogramがlist内にあった場合削除
-        programs = list(map(json.loads, set(map(json.dumps, programs))))
-        log.debug(f'Contents filtered by favorite: {programs}')
-        video_ids = [program.get('video_id') for program in programs]
-        log.debug(f'Contents filtered by favorite video_ids: {video_ids}')
-        if len(video_ids) > 50:
-            i = 0
-            video_ids_list = [video_ids[:50], video_ids[50:]]
-            for video_ids in video_ids_list:
-                responses = youtube_utils.get_live_events(video_ids)
-                log.debug('LIVE EVENT JSON DUMP')
-                log.debug(json.dumps(responses))
-                for resp in responses:
-                    try:
-                        resp['liveStreamingDetails']['scheduledStartTime']
-                    except KeyError:
-                        continue
-                    events.append(LiveEvent(resp, programs[i].get('actor'),
-                                            programs[i].get('collaborate')))
-                    log.info(f'Live event found [{events[-1].id}] {events[-1].channel_title}:' +
-                             f'{events[-1].title}.')
-                    i = i + 1
-        else:
-            responses = youtube_utils.get_live_events(video_ids)
+        # YouTube APIは50件までなのでチャンク分割
+        for chunk_start in range(0, len(video_ids), 50):
+            chunk = video_ids[chunk_start:chunk_start + 50]
+            responses = youtube_utils.get_live_events(chunk)
             log.debug('LIVE EVENT JSON DUMP')
             log.debug(json.dumps(responses))
-            for j, resp in enumerate(responses):
-                try:
-                    resp['liveStreamingDetails']['scheduledStartTime']
-                except KeyError:
+            for resp in responses:
+                if 'scheduledStartTime' not in resp.get('liveStreamingDetails', {}):
                     continue
-                events.append(LiveEvent(resp, programs[j].get('actor'),
-                                        programs[j].get('collaborate')))
-                log.info(f'Live event found [{events[-1].id}] {events[-1].channel_title}:' +
-                         f'{events[-1].title}.')
+                program = program_by_video_id.get(resp['id'])
+                if program is None:
+                    continue
+                event = LiveEvent(resp, program['actor'], program['collaborate'])
+                events.append(event)
+                log.info(f'Live event found [{event.id}] {event.channel_title}:{event.title}.')
+
+        return events
+
+    def _get_live_events(self) -> list:
+        youtube_utils = YoutubeUtils(self.youtube)
+        all_programs = self._get_programs()
+
+        # サムネイルキャッシュの構築
+        thumbnail_hash = {p['actor']: {'holodule_url': p['img']} for p in all_programs}
+        thumbnail_cache_manager = ThumbnailCacheManager(self.cnf, self.youtube, thumbnail_hash)
+        thumbnail_cache = thumbnail_cache_manager.get_thumbnail_cache()
+
+        # 推しメンバーに関連するprogramをフィルタ
+        programs = self._filter_and_annotate_programs(all_programs, thumbnail_cache)
+        log.debug(f'Contents filtered by favorite: {programs}')
+
+        # YouTube APIからLiveEvent取得
+        events = self._build_events_from_responses(programs, youtube_utils)
+
         return self._deduplicate_live_events(events)
 
     def _get_programs(self) -> list:
@@ -128,10 +146,7 @@ class Importer(object):
             s = a.find('div', class_="col text-right name").get_text()
             actor = '\n'.join(filter(lambda x: x.strip(),
                                      s.replace(" ", "").split('\n')))
-            if actor == 'ラプラス':
-                actor = 'ラプラス・ダークネス'
-            if actor == 'アキロゼ':
-                actor = 'アキ・ローゼンタール'
+            actor = ACTOR_NAME_ALIASES.get(actor, actor)
             s_img = a.find('div', class_="col col-sm col-md col-lg col-xl").find('img').attrs['src']
             imgs = a.find_all('div', class_="col col-sm col-md col-lg col-xl")
             collaborators = [
@@ -139,7 +154,7 @@ class Importer(object):
                         for i in imgs
                         if i.find('img').attrs['src'] != s_img
                         ]
-            video_id = url.query.split('=')[1]
+            video_id = parse_qs(url.query).get('v', [None])[0]
             result = {'actor': actor,
                       'collaborators': collaborators,
                       'video_id': video_id,
