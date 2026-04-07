@@ -77,7 +77,7 @@ class Exporter(object):
             should_notify = True
 
         if live_event.scheduled_start_time.to(TZ) > arrow.utcnow().to(TZ):
-            if (live_event.scheduled_start_time.to(TZ) - arrow.utcnow().to(TZ)).seconds <= 900:
+            if (live_event.scheduled_start_time.to(TZ) - arrow.utcnow().to(TZ)).total_seconds() <= 900:
                 self.notify_event_soon_start(live_event, message_template)
                 should_notify = True
 

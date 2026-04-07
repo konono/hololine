@@ -181,7 +181,7 @@ class GoogleCalendarConfiguration:
 @dataclass
 class HoloduleConfiguration:
     holomenbers: List[str]
-    holodule_url: Optional[str] = 'https://schedule.hololive.tv/simple'
+    holodule_url: Optional[str] = 'https://schedule.hololive.tv/'
 
 
 @dataclass
