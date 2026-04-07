@@ -17,7 +17,7 @@ cp -p ../../../run.py build/function/
 
 # Pack python libraries
 echo "Pack python libraries"
-pipenv run pip3 install -r ../../../requirements.txt -t ./build/layer/python/
+uv pip install -r ../../../requirements.txt --target ./build/layer/python/
 cp -r $PROJECT_DIR ./build/layer/python/
 
 # Remove pycache in build directory

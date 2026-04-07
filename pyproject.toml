@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.13"
 arrow = "*"
 cachetools = "*"
 certifi = "*"
@@ -41,6 +41,11 @@ beautifulsoup4 = "*"
 [tool.poetry.group.dev.dependencies]
 pre-commit = "*"
 tox = "*"
+[project]
+name = "holoscope"
+version = "0.1.0"
+requires-python = ">=3.13"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

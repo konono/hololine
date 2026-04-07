@@ -32,7 +32,7 @@ resource "aws_lambda_function" "hololine_me" {
   function_name    = "${var.system_name}"
   handler          = "run.lambda_handler"
   filename         = data.archive_file.function_zip.output_path
-  runtime          = "python3.9"
+  runtime          = "python3.13"
   role             = aws_iam_role.lambda_iam_role.arn
   source_code_hash = data.archive_file.function_zip.output_base64sha256
   layers           = [aws_lambda_layer_version.lambda_layer.arn]

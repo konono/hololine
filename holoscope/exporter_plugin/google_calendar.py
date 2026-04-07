@@ -149,18 +149,18 @@ class Exporter(object):
                     log.info(f'[{live_event.id}]: Update the title of the scheduled {live_event.title}.')
                     continue
                 if live_event.actual_start_time:
-                    if live_event.actual_start_time.to('Asia/Tokyo') != event.start_time:
+                    if live_event.actual_start_time.to('Asia/Tokyo') != event.start_dateTime:
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Update the start time to the actual time ' +
                                  f'from the scheduled {live_event.title}.')
                         continue
-                elif live_event.scheduled_start_time.to('Asia/Tokyo') != event.start_time:
+                elif live_event.scheduled_start_time.to('Asia/Tokyo') != event.start_dateTime:
                     self._update_event(event.id, live_event)
                     log.info(f'[{live_event.id}]: Update the start time ' +
                              f'of the scheduled{live_event.title}.')
                     continue
                 if live_event.actual_end_time:
-                    if live_event.actual_end_time.to('Asia/Tokyo') != event.end_time:
+                    if live_event.actual_end_time.to('Asia/Tokyo') != event.end_dateTime:
                         self._update_event(event.id, live_event)
                         log.info(f'[{live_event.id}]: Add the actual end time to ' +
                                  f'the scheduled {live_event.title}.')
