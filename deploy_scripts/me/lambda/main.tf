@@ -1,3 +1,13 @@
+terraform {
+  backend "s3" {
+    bucket         = "holoscope-terraform-state"
+    key            = "me/terraform.tfstate"
+    region         = "ap-northeast-1"
+    dynamodb_table = "holoscope-terraform-lock"
+    profile        = "terraform_holoscope"
+  }
+}
+
 provider "aws" {
   profile = "terraform_holoscope"
   region  = "ap-northeast-1"
